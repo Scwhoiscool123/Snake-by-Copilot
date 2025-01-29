@@ -5,12 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snake Game</title>
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #000; }
-        canvas { border: 1px solid #fff; }
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #000;
+        }
+        canvas {
+            border: 1px solid #fff;
+            touch-action: none;
+        }
+        #controls {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #controls button {
+            background-color: #fff;
+            border: none;
+            color: #000;
+            font-size: 24px;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .up-down {
+            display: flex;
+            flex-direction: column;
+        }
+        #controls button:active {
+            background-color: #ccc;
+        }
     </style>
 </head>
 <body>
     <canvas id="game" width="400" height="400"></canvas>
+    <!-- On-Screen Controls -->
+    <div id="controls">
+        <button id="left">◀️</button>
+        <div class="up-down">
+            <button id="up">▲</button>
+            <button id="down">▼</button>
+        </div>
+        <button id="right">▶️</button>
+    </div>
     <script>
         const canvas = document.getElementById('game');
         const context = canvas.getContext('2d');
@@ -18,6 +60,12 @@
         const rows = canvas.height / scale;
         const columns = canvas.width / scale;
         let snake;
+        let fruit;
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
 
         (function setup() {
             snake = new Snake();
@@ -34,12 +82,64 @@
                     fruit.pickLocation();
                 }
                 snake.checkCollision();
-                document.querySelector('body').addEventListener('keydown', e => {
-                    const direction = e.key.replace('Arrow', '');
-                    snake.changeDirection(direction);
-                });
             }, 250);
         }());
+
+        document.addEventListener('keydown', e => {
+            const direction = e.key.replace('Arrow', '');
+            snake.changeDirection(direction);
+        });
+
+        // Touch Events for Swipe Controls
+        canvas.addEventListener('touchstart', handleTouchStart, false);
+        canvas.addEventListener('touchend', handleTouchEnd, false);
+
+        function handleTouchStart(evt) {
+            const firstTouch = evt.touches[0];
+            touchStartX = firstTouch.clientX;
+            touchStartY = firstTouch.clientY;
+        }
+
+        function handleTouchEnd(evt) {
+            touchEndX = evt.changedTouches[0].clientX;
+            touchEndY = evt.changedTouches[0].clientY;
+            handleGesture();
+        }
+
+        function handleGesture() {
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal Swipe
+                if (diffX > 0) {
+                    snake.changeDirection('Right');
+                } else {
+                    snake.changeDirection('Left');
+                }
+            } else {
+                // Vertical Swipe
+                if (diffY > 0) {
+                    snake.changeDirection('Down');
+                } else {
+                    snake.changeDirection('Up');
+                }
+            }
+        }
+
+        // On-Screen Buttons Controls
+        document.getElementById('up').addEventListener('click', () => {
+            snake.changeDirection('Up');
+        });
+        document.getElementById('down').addEventListener('click', () => {
+            snake.changeDirection('Down');
+        });
+        document.getElementById('left').addEventListener('click', () => {
+            snake.changeDirection('Left');
+        });
+        document.getElementById('right').addEventListener('click', () => {
+            snake.changeDirection('Right');
+        });
 
         function Snake() {
             this.x = 0;
